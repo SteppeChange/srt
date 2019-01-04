@@ -38,9 +38,11 @@ endif()
 set (SRT_VERSION 1.3.1)
 set_version_variables(SRT_VERSION ${SRT_VERSION})
 
+set (ENABLE_DEBUG "1")
+set (ENABLE_HEAVY_LOGGING_DEFAULT ON)
+
 # The CMAKE_BUILD_TYPE seems not to be always set, weird.
 if (NOT DEFINED ENABLE_DEBUG)
-
 	if (CMAKE_BUILD_TYPE STREQUAL "Debug")
 		set (ENABLE_DEBUG ON)
 	else()
@@ -65,12 +67,12 @@ message(STATUS "BUILD TYPE: ${CMAKE_BUILD_TYPE}")
 # XXX CHANGE: Logging is enabled now by default,
 # use ENABLE_LOGGING=NO in cmake or
 # --disable-logging in configure.
-set(ENABLE_HEAVY_LOGGING_DEFAULT OFF)
+## set(ENABLE_HEAVY_LOGGING_DEFAULT OFF)
 
 # Always turn logging on if the build type is debug
-if (ENABLE_DEBUG)
-	set(ENABLE_HEAVY_LOGGING_DEFAULT ON)
-endif()
+## if (ENABLE_DEBUG)
+##	set(ENABLE_HEAVY_LOGGING_DEFAULT ON)
+## endif()
 
 
 # options
