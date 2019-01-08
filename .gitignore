@@ -1,0 +1,12 @@
+*.a
+*.dylib
+*.pc
+srt-file-transmit
+srt-live-transmit
+srt-multiplex
+stransmit
+version.h
+CMakeCache.txt
+CMakeFiles
+Makefile
+*.cmake
