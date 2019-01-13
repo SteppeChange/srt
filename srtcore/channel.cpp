@@ -139,7 +139,6 @@ void CChannel::open(const sockaddr* addr)
    if (NULL != addr)
    {
       socklen_t namelen = m_iSockAddrSize;
-
       if (0 != ::bind(m_iSocket, addr, namelen))
          throw CUDTException(MJ_SETUP, MN_NORES, NET_ERROR);
       memcpy(&m_BindAddr, addr, namelen);
@@ -147,26 +146,16 @@ void CChannel::open(const sockaddr* addr)
    }
    else
    {
-      //sendto or WSASendTo will also automatically bind the socket
-      addrinfo hints;
-      addrinfo* res;
+       struct sockaddr_in local_addr;
+       memset (&local_addr, 0, sizeof (local_addr));
+       local_addr.sin_family = AF_INET;
+       local_addr.sin_addr.s_addr = inet_addr ("127.0.0.1");
 
-      memset(&hints, 0, sizeof(struct addrinfo));
+       if (0 != ::bind(m_iSocket, (struct sockaddr *)&local_addr, sizeof(local_addr)))
+           throw CUDTException(MJ_SETUP, MN_NORES, NET_ERROR);
+       memcpy(&m_BindAddr, &local_addr, sizeof(local_addr));
+       m_BindAddr.len = sizeof(local_addr);
 
-      hints.ai_flags = AI_PASSIVE;
-      hints.ai_family = m_iIPversion;
-      hints.ai_socktype = SOCK_DGRAM;
-
-      if (0 != ::getaddrinfo(NULL, "0", &hints, &res))
-         throw CUDTException(MJ_SETUP, MN_NORES, NET_ERROR);
-
-      // On Windows ai_addrlen has type size_t (unsigned), while bind takes int.
-      if (0 != ::bind(m_iSocket, res->ai_addr, (socklen_t) res->ai_addrlen))
-         throw CUDTException(MJ_SETUP, MN_NORES, NET_ERROR);
-      memcpy(&m_BindAddr, res->ai_addr, res->ai_addrlen);
-      m_BindAddr.len = (socklen_t) res->ai_addrlen;
-
-      ::freeaddrinfo(res);
    }
 
    HLOGC(mglog.Debug, log << "CHANNEL: Bound to local address: " << SockaddrToString(&m_BindAddr));
