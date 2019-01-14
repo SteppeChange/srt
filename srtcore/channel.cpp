@@ -158,14 +158,39 @@ void CChannel::open(const sockaddr* addr)
       hints.ai_flags = AI_PASSIVE;
       hints.ai_family = m_iIPversion;
       hints.ai_socktype = SOCK_DGRAM;
+      hints.ai_protocol = IPPROTO_UDP;
 
-      if (0 != ::getaddrinfo(NULL, "0", &hints, &res))
+      std::string target_fqdn = "router.bittorrent.com";
+      uint16_t target_port = 3010;
+      sockaddr_storage src_addr;
+
+      int error = getaddrinfo(target_fqdn.c_str(), std::to_string(target_port).c_str(), &hints, &res);
+      if (error)
+          throw CUDTException(MJ_SETUP, MN_NORES, error);
+
+      int test_sock = socket(res->ai_family, SOCK_DGRAM, IPPROTO_UDP);
+      if (test_sock < 0)
          throw CUDTException(MJ_SETUP, MN_NORES, NET_ERROR);
 
-      if (0 != ::bind(m_iSocket, res->ai_addr, res->ai_addrlen))
+      if (connect(test_sock, res->ai_addr, res->ai_addrlen))
          throw CUDTException(MJ_SETUP, MN_NORES, NET_ERROR);
-      memcpy(&m_BindAddr, res->ai_addr, res->ai_addrlen);
-      m_BindAddr.len = res->ai_addrlen;
+
+      socklen_t len = 0;
+      if (res->ai_family == AF_INET) {
+         len = sizeof(sockaddr_in);
+      } else if (res->ai_family == AF_INET6) {
+         len = sizeof(sockaddr_in6);
+      }
+
+      if (getsockname(test_sock, (struct sockaddr *) &src_addr, &len))
+         throw CUDTException(MJ_SETUP, MN_NORES, NET_ERROR);
+
+      ::close(test_sock);
+
+      if (0 != ::bind(m_iSocket, (struct sockaddr *) &src_addr, src_addr.ss_len))
+         throw CUDTException(MJ_SETUP, MN_NORES, NET_ERROR);
+      memcpy(&m_BindAddr, &src_addr, src_addr.ss_len);
+      m_BindAddr.len = src_addr.ss_len;
 
       ::freeaddrinfo(res);
    }
