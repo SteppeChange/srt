@@ -362,11 +362,11 @@ public:
         m_prefix( globprefix == "" ? globprefix : ": " + globprefix),
         m_fa(functional_area),
         m_config(config),
-        Debug ( m_fa, LogLevel::debug, " D" + m_prefix, m_config ),
-        Note  ( m_fa, LogLevel::note,  ".N" + m_prefix, m_config ),
-        Warn  ( m_fa, LogLevel::warning, "!W" + m_prefix, m_config ),
-        Error ( m_fa, LogLevel::error, "*E" + m_prefix, m_config ),
-        Fatal ( m_fa, LogLevel::fatal, "!!FATAL!!" + m_prefix, m_config )
+        Debug ( m_fa, LogLevel::debug, "[DBG]" + m_prefix, m_config ),
+        Note  ( m_fa, LogLevel::note,  "[INF]" + m_prefix, m_config ),
+        Warn  ( m_fa, LogLevel::warning, "[WRN]" + m_prefix, m_config ),
+        Error ( m_fa, LogLevel::error, "[ERR]" + m_prefix, m_config ),
+        Fatal ( m_fa, LogLevel::fatal, "[FAT]" + m_prefix, m_config )
     {
     }
 
