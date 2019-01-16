@@ -1700,8 +1700,10 @@ void CUDTUnited::updateMux(
       ? ntohs(((sockaddr_in*)sa)->sin_port)
       : ntohs(((sockaddr_in6*)sa)->sin6_port);
 
-   if (addr_cb)
-       addr_cb(s->m_SocketID, sa);
+   if (addr_cb) {
+      socklen_t sa_len = (AF_INET == s->m_pUDT->m_iIPversion) ? sizeof(sockaddr_in) : sizeof(sockaddr_in6);
+      addr_cb(s->m_SocketID, sa, sa_len);
+   }
 
    if (AF_INET == s->m_pUDT->m_iIPversion)
       delete (sockaddr_in*)sa;
