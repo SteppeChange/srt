@@ -64,6 +64,7 @@ modified by
 #include "cache.h"
 #include "epoll.h"
 #include "handshake.h"
+#include "srt.h"
 
 class CUDT;
 
