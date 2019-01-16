@@ -187,10 +187,10 @@ void CChannel::open(const sockaddr* addr)
 
       ::close(test_sock);
 
-      if (0 != ::bind(m_iSocket, (struct sockaddr *) &src_addr, src_addr.ss_len))
+      if (0 != ::bind(m_iSocket, (struct sockaddr *) &src_addr, len))
          throw CUDTException(MJ_SETUP, MN_NORES, NET_ERROR);
-      memcpy(&m_BindAddr, &src_addr, src_addr.ss_len);
-      m_BindAddr.len = src_addr.ss_len;
+      memcpy(&m_BindAddr, &src_addr, len);
+      m_BindAddr.len = len;
 
       ::freeaddrinfo(res);
    }
