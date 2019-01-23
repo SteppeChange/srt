@@ -40,6 +40,7 @@ set_version_variables(SRT_VERSION ${SRT_VERSION})
 
 set (ENABLE_DEBUG "1")
 set (ENABLE_HEAVY_LOGGING_DEFAULT ON)
+set (ENABLE_CXX11 1)
 
 # The CMAKE_BUILD_TYPE seems not to be always set, weird.
 if (NOT DEFINED ENABLE_DEBUG)
