@@ -141,7 +141,6 @@ void CChannel::open(const sockaddr* addr)
    if (NULL != addr)
    {
       socklen_t namelen = m_iSockAddrSize;
-
       if (0 != ::bind(m_iSocket, addr, namelen))
          throw CUDTException(MJ_SETUP, MN_NORES, NET_ERROR);
       memcpy(&m_BindAddr, addr, namelen);
@@ -149,50 +148,16 @@ void CChannel::open(const sockaddr* addr)
    }
    else
    {
-      //sendto or WSASendTo will also automatically bind the socket
-      addrinfo hints;
-      addrinfo* res;
+       struct sockaddr_in local_addr;
+       memset (&local_addr, 0, sizeof (local_addr));
+       local_addr.sin_family = AF_INET;
+       local_addr.sin_addr.s_addr = inet_addr ("127.0.0.1");
 
-      memset(&hints, 0, sizeof(struct addrinfo));
+       if (0 != ::bind(m_iSocket, (struct sockaddr *)&local_addr, sizeof(local_addr)))
+           throw CUDTException(MJ_SETUP, MN_NORES, NET_ERROR);
+       memcpy(&m_BindAddr, &local_addr, sizeof(local_addr));
+       m_BindAddr.len = sizeof(local_addr);
 
-      hints.ai_flags = AI_PASSIVE;
-      hints.ai_family = m_iIPversion;
-      hints.ai_socktype = SOCK_DGRAM;
-      hints.ai_protocol = IPPROTO_UDP;
-
-      std::string target_fqdn = "router.bittorrent.com";
-      uint16_t target_port = 3010;
-      sockaddr_storage src_addr;
-
-      int error = getaddrinfo(target_fqdn.c_str(), std::to_string(target_port).c_str(), &hints, &res);
-      if (error)
-          throw CUDTException(MJ_SETUP, MN_NORES, error);
-
-      int test_sock = socket(res->ai_family, SOCK_DGRAM, IPPROTO_UDP);
-      if (test_sock < 0)
-         throw CUDTException(MJ_SETUP, MN_NORES, NET_ERROR);
-
-      if (connect(test_sock, res->ai_addr, res->ai_addrlen))
-         throw CUDTException(MJ_SETUP, MN_NORES, NET_ERROR);
-
-      socklen_t len = 0;
-      if (res->ai_family == AF_INET) {
-         len = sizeof(sockaddr_in);
-      } else if (res->ai_family == AF_INET6) {
-         len = sizeof(sockaddr_in6);
-      }
-
-      if (getsockname(test_sock, (struct sockaddr *) &src_addr, &len))
-         throw CUDTException(MJ_SETUP, MN_NORES, NET_ERROR);
-
-      ::close(test_sock);
-
-      if (0 != ::bind(m_iSocket, (struct sockaddr *) &src_addr, len))
-         throw CUDTException(MJ_SETUP, MN_NORES, NET_ERROR);
-      memcpy(&m_BindAddr, &src_addr, len);
-      m_BindAddr.len = len;
-
-      ::freeaddrinfo(res);
    }
 
    HLOGC(mglog.Debug, log << "CHANNEL: Bound to local address: " << SockaddrToString(&m_BindAddr));
