@@ -191,6 +191,8 @@ std::string CUDTUnited::CONID(SRTSOCKET sock)
 int CUDTUnited::startup()
 {
    CGuard gcinit(m_InitLock);
+    
+    HLOGC(mglog.Note, log << "SRT startup");
 
    if (m_iInstanceCount++ > 0)
       return 0;
@@ -309,7 +311,7 @@ SRTSOCKET CUDTUnited::newSocket(int af, int)
    CGuard::enterCS(m_ControlLock);
    try
    {
-      HLOGC(mglog.Debug, log << CONID(ns->m_SocketID)
+      HLOGC(mglog.Note, log << CONID(ns->m_SocketID)
          << "newSocket: mapping socket "
          << ns->m_SocketID);
       m_Sockets[ns->m_SocketID] = ns;
@@ -430,8 +432,7 @@ int CUDTUnited::newConnection(const SRTSOCKET listen, const sockaddr* peer, CHan
        // this call causes sending the SRT Handshake through this socket.
        // Without this mapping the socket cannot be found and therefore
        // the SRT Handshake message would fail.
-       HLOGF(mglog.Debug, 
-               "newConnection: incoming %s, mapping socket %d",
+       HLOGF(mglog.Note, "newConnection: incoming %s, mapping socket %d",
                SockaddrToString(peer).c_str(), ns->m_SocketID);
        {
            CGuard cg(m_ControlLock);
@@ -927,7 +928,7 @@ int CUDTUnited::close(const SRTSOCKET u)
       // be unable to bind to this port that the about-to-delete listener
       // is currently occupying (due to blocked slot in the RcvQueue).
 
-      HLOGC(mglog.Debug, log << s->m_pUDT->CONID() << " CLOSING (removing listener immediately)");
+      HLOGC(mglog.Note, log << s->m_pUDT->CONID() << " CLOSING (removing listener immediately)");
       {
           CGuard cg(s->m_pUDT->m_ConnectionLock);
           s->m_pUDT->m_bListening = false;
@@ -1522,7 +1523,7 @@ void CUDTUnited::checkBrokenSockets()
          && ((!j->second->m_pUDT->m_pRNode)
             || !j->second->m_pUDT->m_pRNode->m_bOnList))
       {
-         // HLOGF(mglog.Debug, "will unref socket: %d\n", j->first);
+         HLOGF(mglog.Warn, "socket timeout: %d\n", j->first);
          tbr.push_back(j->first);
       }
    }
@@ -1585,7 +1586,7 @@ void CUDTUnited::removeSocket(const SRTSOCKET u)
       UDT_EPOLL_IN|UDT_EPOLL_OUT|UDT_EPOLL_ERR, false);
 
    // delete this one
-   HLOGC(mglog.Debug, log << "GC/removeSocket: closing associated UDT %" << u);
+   HLOGC(mglog.Note, log << "GC/removeSocket: closing associated UDT %" << u);
    i->second->m_pUDT->close();
    HLOGC(mglog.Debug, log << "GC/removeSocket: DELETING SOCKET %" << u);
    delete i->second;
@@ -1850,6 +1851,8 @@ void* CUDTUnited::garbageCollect(void* p)
       i->second->m_Status = SRTS_CLOSED;
       i->second->m_TimeStamp = CTimer::getTime();
       self->m_ClosedSockets[i->first] = i->second;
+
+       HLOGC(mglog.Note, log << "Socket closing by garbageCollect");
 
       // remove from listener's queue
       map<SRTSOCKET, CUDTSocket*>::iterator ls = self->m_Sockets.find(
