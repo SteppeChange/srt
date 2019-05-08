@@ -169,7 +169,7 @@ public: //API
     static int bind(SRTSOCKET u, UDPSOCKET udpsock);
     static int listen(SRTSOCKET u, int backlog);
     static SRTSOCKET accept(SRTSOCKET u, sockaddr* addr, int* addrlen);
-    static int connect(SRTSOCKET u, const sockaddr* name, int namelen, int32_t forced_isn);
+    static int connect(SRTSOCKET u, const sockaddr* name, int namelen, int32_t forced_isn, from_addr_cb const& addr_cb);
     static int close(SRTSOCKET u);
     static int getpeername(SRTSOCKET u, sockaddr* name, int* namelen);
     static int getsockname(SRTSOCKET u, sockaddr* name, int* namelen);
