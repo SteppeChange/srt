@@ -22,6 +22,7 @@ written by
 
 #include <string.h>
 #include <stdlib.h>
+#include <functional>
 
 #include "srt4udt.h"
 #include "logging_api.h"
@@ -509,7 +510,11 @@ inline bool operator&(int flags, SRT_EPOLL_OPT eflg)
 }
 #endif
 
+#if __cplusplus <= 199711L
+# error This library needs at least a C++11 compliant compiler
+#endif
 
+using from_addr_cb = std::function<void(const SRTSOCKET, struct sockaddr const *, const socklen_t)>;
 
 typedef struct CPerfMon SRT_TRACEINFO;
 typedef struct CBytePerfMon SRT_TRACEBSTATS;
@@ -532,7 +537,7 @@ SRT_API       int srt_listen       (SRTSOCKET u, int backlog);
 SRT_API SRTSOCKET srt_accept       (SRTSOCKET u, struct sockaddr* addr, int* addrlen);
 typedef int srt_listen_callback_fn   (void* opaq, SRTSOCKET ns, int hsversion, const struct sockaddr* peeraddr, const char* streamid);
 SRT_API       int srt_listen_callback(SRTSOCKET lsn, srt_listen_callback_fn* hook_fn, void* hook_opaque);
-SRT_API       int srt_connect      (SRTSOCKET u, const struct sockaddr* name, int namelen);
+SRT_API       int srt_connect      (SRTSOCKET u, const struct sockaddr* name, int namelen, from_addr_cb const& addr_cb);
 SRT_API       int srt_connect_debug(SRTSOCKET u, const struct sockaddr* name, int namelen, int forced_isn);
 SRT_API       int srt_rendezvous   (SRTSOCKET u, const struct sockaddr* local_name, int local_namelen,
                                     const struct sockaddr* remote_name, int remote_namelen);

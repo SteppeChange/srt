@@ -144,7 +144,6 @@ void CChannel::open(const sockaddr* addr)
    if (NULL != addr)
    {
       socklen_t namelen = m_iSockAddrSize;
-
       if (0 != ::bind(m_iSocket, addr, namelen))
          throw CUDTException(MJ_SETUP, MN_NORES, NET_ERROR);
       memcpy(&m_BindAddr, addr, namelen);
@@ -152,26 +151,26 @@ void CChannel::open(const sockaddr* addr)
    }
    else
    {
-      //sendto or WSASendTo will also automatically bind the socket
-      addrinfo hints;
-      addrinfo* res;
+       //sendto or WSASendTo will also automatically bind the socket
+       addrinfo hints;
+       addrinfo* res;
 
-      memset(&hints, 0, sizeof(struct addrinfo));
+       memset(&hints, 0, sizeof(struct addrinfo));
 
-      hints.ai_flags = AI_PASSIVE;
-      hints.ai_family = m_iIPversion;
-      hints.ai_socktype = SOCK_DGRAM;
+       hints.ai_flags = AI_PASSIVE;
+       hints.ai_family = m_iIPversion;
+       hints.ai_socktype = SOCK_DGRAM;
 
-      if (0 != ::getaddrinfo(NULL, "0", &hints, &res))
-         throw CUDTException(MJ_SETUP, MN_NORES, NET_ERROR);
+       if (0 != ::getaddrinfo(NULL, "0", &hints, &res))
+           throw CUDTException(MJ_SETUP, MN_NORES, NET_ERROR);
 
-      // On Windows ai_addrlen has type size_t (unsigned), while bind takes int.
-      if (0 != ::bind(m_iSocket, res->ai_addr, (socklen_t) res->ai_addrlen))
-         throw CUDTException(MJ_SETUP, MN_NORES, NET_ERROR);
-      memcpy(&m_BindAddr, res->ai_addr, res->ai_addrlen);
-      m_BindAddr.len = (socklen_t) res->ai_addrlen;
+       // On Windows ai_addrlen has type size_t (unsigned), while bind takes int.
+       if (0 != ::bind(m_iSocket, res->ai_addr, (socklen_t) res->ai_addrlen))
+           throw CUDTException(MJ_SETUP, MN_NORES, NET_ERROR);
+       memcpy(&m_BindAddr, res->ai_addr, res->ai_addrlen);
+       m_BindAddr.len = (socklen_t) res->ai_addrlen;
 
-      ::freeaddrinfo(res);
+       ::freeaddrinfo(res);
    }
 
    HLOGC(mglog.Debug, log << "CHANNEL: Bound to local address: " << SockaddrToString(&m_BindAddr));

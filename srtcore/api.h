@@ -175,7 +175,7 @@ public:
    int bind(const SRTSOCKET u, UDPSOCKET udpsock);
    int listen(const SRTSOCKET u, int backlog);
    SRTSOCKET accept(const SRTSOCKET listen, sockaddr* addr, int* addrlen);
-   int connect(const SRTSOCKET u, const sockaddr* name, int namelen, int32_t forced_isn);
+   int connect(const SRTSOCKET u, const sockaddr* name, int namelen, int32_t forced_isn, from_addr_cb const& addr_cb);
    int close(const SRTSOCKET u);
    int getpeername(const SRTSOCKET u, sockaddr* name, int* namelen);
    int getsockname(const SRTSOCKET u, sockaddr* name, int* namelen);
@@ -222,8 +222,9 @@ private:
    void connect_complete(const SRTSOCKET u);
    CUDTSocket* locate(const SRTSOCKET u);
    CUDTSocket* locate(const sockaddr* peer, const SRTSOCKET id, int32_t isn);
-   void updateMux(CUDTSocket* s, const sockaddr* addr = NULL, const UDPSOCKET* = NULL);
+   void updateMux(CUDTSocket* s, const sockaddr* addr = NULL, const UDPSOCKET* udpsock = NULL, from_addr_cb const& addr_cb = nullptr);
    void updateListenerMux(CUDTSocket* s, const CUDTSocket* ls);
+   void connect_cb(const SRTSOCKET u __attribute__((unused)), struct sockaddr const* addr __attribute__((unused))) {}
 
 private:
    std::map<int, CMultiplexer> m_mMultiplexer;		// UDP multiplexer
