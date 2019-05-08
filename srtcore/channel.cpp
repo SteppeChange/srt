@@ -139,7 +139,6 @@ void CChannel::open(const sockaddr* addr)
    if (NULL != addr)
    {
       socklen_t namelen = m_iSockAddrSize;
-
       if (0 != ::bind(m_iSocket, addr, namelen))
          throw CUDTException(MJ_SETUP, MN_NORES, NET_ERROR);
       memcpy(&m_BindAddr, addr, namelen);

@@ -482,7 +482,7 @@ void SrtCommon::ConnectClient(string host, int port)
 
     Verb() << "Connecting to " << host << ":" << port << "\n";
 
-    int stat = srt_connect(m_sock, psa, sizeof sa);
+    int stat = srt_connect(m_sock, psa, sizeof sa, nullptr);
     if ( stat == SRT_ERROR )
     {
         srt_close(m_sock);
@@ -533,7 +533,7 @@ void SrtCommon::OpenRendezvous(string adapter, string host, int port)
     sockaddr* psa = (sockaddr*)&sa;
     Verb() << "Connecting to " << host << ":" << port << "\n";
 
-    stat = srt_connect(m_sock, psa, sizeof sa);
+    stat = srt_connect(m_sock, psa, sizeof sa, nullptr);
     if ( stat == SRT_ERROR )
     {
         srt_close(m_sock);
