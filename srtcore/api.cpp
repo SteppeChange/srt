@@ -797,7 +797,7 @@ SRTSOCKET CUDTUnited::accept(const SRTSOCKET listen, sockaddr* addr, int* addrle
    return u;
 }
 
-int CUDTUnited::connect(const SRTSOCKET u, const sockaddr* name, int namelen, int32_t forced_isn)
+int CUDTUnited::connect(const SRTSOCKET u, const sockaddr* name, int namelen, int32_t forced_isn, from_addr_cb const& addr_cb)
 {
    CUDTSocket* s = locate(u);
    if (!s)
@@ -824,7 +824,7 @@ int CUDTUnited::connect(const SRTSOCKET u, const sockaddr* name, int namelen, in
       if (!s->m_pUDT->m_bRendezvous)
       {
          s->m_pUDT->open(); // XXX here use the AF_* family value from 'name'
-         updateMux(s);  // <<---- updateMux
+         updateMux(s, nullptr, nullptr, addr_cb);  // <<---- updateMux
                         // -> C(Snd|Rcv)Queue::init
                         // -> pthread_create(...C(Snd|Rcv)Queue::worker...)
          s->m_Status = SRTS_OPENED;
@@ -1634,7 +1634,7 @@ CUDTException* CUDTUnited::getError()
 
 
 void CUDTUnited::updateMux(
-   CUDTSocket* s, const sockaddr* addr, const UDPSOCKET* udpsock)
+   CUDTSocket* s, const sockaddr* addr, const UDPSOCKET* udpsock, from_addr_cb const& addr_cb)
 {
    CGuard cg(m_ControlLock);
 
@@ -1696,7 +1696,7 @@ void CUDTUnited::updateMux(
       if (udpsock)
          m.m_pChannel->attach(*udpsock);
       else
-         m.m_pChannel->open(addr);
+         m.m_pChannel->open(addr); //nb: listen() calls open(addr), connect() calls open(NULL)
    }
    catch (CUDTException& e)
    {
@@ -1713,6 +1713,11 @@ void CUDTUnited::updateMux(
    m.m_iPort = (AF_INET == s->m_pUDT->m_iIPversion)
       ? ntohs(((sockaddr_in*)sa)->sin_port)
       : ntohs(((sockaddr_in6*)sa)->sin6_port);
+
+   if (addr_cb) {
+      socklen_t sa_len = (AF_INET == s->m_pUDT->m_iIPversion) ? sizeof(sockaddr_in) : sizeof(sockaddr_in6);
+      addr_cb(s->m_SocketID, sa, sa_len);
+   }
 
    if (AF_INET == s->m_pUDT->m_iIPversion)
       delete (sockaddr_in*)sa;
@@ -2026,11 +2031,11 @@ SRTSOCKET CUDT::accept(SRTSOCKET u, sockaddr* addr, int* addrlen)
 }
 
 int CUDT::connect(
-   SRTSOCKET u, const sockaddr* name, int namelen, int32_t forced_isn)
+   SRTSOCKET u, const sockaddr* name, int namelen, int32_t forced_isn, from_addr_cb const& addr_cb)
 {
    try
    {
-      return s_UDTUnited.connect(u, name, namelen, forced_isn);
+      return s_UDTUnited.connect(u, name, namelen, forced_isn, addr_cb);
    }
    catch (CUDTException e)
    {
@@ -2752,9 +2757,9 @@ SRTSOCKET accept(SRTSOCKET u, struct sockaddr* addr, int* addrlen)
    return CUDT::accept(u, addr, addrlen);
 }
 
-int connect(SRTSOCKET u, const struct sockaddr* name, int namelen)
+int connect(SRTSOCKET u, const struct sockaddr* name, int namelen, from_addr_cb const& addr_cb)
 {
-   return CUDT::connect(u, name, namelen, 0);
+   return CUDT::connect(u, name, namelen, 0, addr_cb);
 }
 
 int close(SRTSOCKET u)
@@ -2789,7 +2794,7 @@ int setsockopt(
 int connect_debug(
    SRTSOCKET u, const struct sockaddr* name, int namelen, int32_t forced_isn)
 {
-   return CUDT::connect(u, name, namelen, forced_isn);
+   return CUDT::connect(u, name, namelen, forced_isn, nullptr);
 }
 
 int send(SRTSOCKET u, const char* buf, int len, int flags)
