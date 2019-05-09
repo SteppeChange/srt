@@ -147,59 +147,61 @@ endif()
 
 # find OpenSSL
 if ( USE_GNUTLS )
-	set (SSL_REQUIRED_MODULES "gnutls nettle")
-	if (WIN32)
-		if (MINGW)
-			set (SSL_REQUIRED_MODULES "${SSL_REQUIRED_MODULES} zlib")
-		endif()
-	endif()
- 
-	pkg_check_modules (SSL REQUIRED ${SSL_REQUIRED_MODULES})
+    message(STATUS "SSL Dependency: using GNUTLS with Nettle, as requested")
+    set (SSL_REQUIRED_MODULES "gnutls nettle")
+    if (WIN32)
+        if (MINGW)
+            set (SSL_REQUIRED_MODULES "${SSL_REQUIRED_MODULES} zlib")
+        endif()
+    endif()
 
-	add_definitions(
-		-DUSE_GNUTLS=1
-	)
+    pkg_check_modules (SSL REQUIRED ${SSL_REQUIRED_MODULES})
 
-	link_directories(
-		${SSL_LIBRARY_DIRS}
-	)
-	message(STATUS "SSL Dependency: using GNUTLS with Nettle, as requested")
+    add_definitions(
+            -DUSE_GNUTLS=1
+    )
+
+    link_directories(
+            ${SSL_LIBRARY_DIRS}
+    )
 else()
-	set (SSL_REQUIRED_MODULES "openssl libcrypto zlib")
+    message(STATUS "SSL Dependency: using OpenSSL (default)")
 
-	if (USE_OPENSSL_PC)
+    # Try using pkg-config method first if enabled,
+    # fall back to find_package method otherwise
+    if (USE_OPENSSL_PC)
+        pkg_check_modules(SSL "openssl libcrypto")
+    endif()
+    if (SSL_FOUND)
+        set (SSL_REQUIRED_MODULES "openssl libcrypto")
 
-		pkg_check_modules(SSL REQUIRED ${SSL_REQUIRED_MODULES})
+        # We have some cases when pkg-config is improperly configured
+        # When it doesn't ship the -L and -I options, and the CMAKE_PREFIX_PATH
+        # is set (also through `configure`), then we have this problem. If so,
+        # set forcefully the -I and -L contents to prefix/include and
+        # prefix/lib.
+        if ("${SSL_LIBRARY_DIRS}" STREQUAL "")
+            if (NOT "${CMAKE_PREFIX_PATH}" STREQUAL "")
+                message(STATUS "WARNING: pkg-config has incorrect prefix - enforcing target path prefix: ${CMAKE_PREFIX_PATH}")
+                set (SSL_LIBRARY_DIRS ${CMAKE_PREFIX_PATH}/${CMAKE_INSTALL_LIBDIR})
+                set (SSL_INCLUDE_DIRS ${CMAKE_PREFIX_PATH}/include)
+            endif()
+        endif()
 
-		# We have some cases when pkg-config is improperly configured
-		# When it doesn't ship the -L and -I options, and the CMAKE_PREFIX_PATH
-		# is set (also through `configure`), then we have this problem. If so,
-		# set forcefully the -I and -L contents to prefix/include and
-		# prefix/lib.
-
-		if ("${SSL_LIBRARY_DIRS}" STREQUAL "")
-		if (NOT "${CMAKE_PREFIX_PATH}" STREQUAL "")
-			message(STATUS "WARNING: pkg-config has incorrect prefix - enforcing target path prefix: ${CMAKE_PREFIX_PATH}")
-			set (SSL_LIBRARY_DIRS ${CMAKE_PREFIX_PATH}/${CMAKE_INSTALL_LIBDIR})
-			set (SSL_INCLUDE_DIRS ${CMAKE_PREFIX_PATH}/include)
-		endif()
-		endif()
-
-		link_directories(
-			${SSL_LIBRARY_DIRS}
-		)
-		message(STATUS "SSL REPORT: -L ${SSL_LIBRARY_DIRS} -I ${SSL_INCLUDE_DIRS} -l;${SSL_LIBRARIES}")
-	else()
-
-		find_package(OpenSSL REQUIRED)
-		set (SSL_INCLUDE_DIRS ${OPENSSL_INCLUDE_DIR})
-		set (SSL_LIBRARIES ${OPENSSL_LIBRARIES})
-	endif()
-	add_definitions(
-		-DHAICRYPT_USE_OPENSSL_EVP=1
-		-DHAICRYPT_USE_OPENSSL_AES
-	)
-	message(STATUS "SSL Dependency: using OpenSSL (default)")
+        link_directories(
+                ${SSL_LIBRARY_DIRS}
+        )
+        message(STATUS "SSL via pkg-config: -L ${SSL_LIBRARY_DIRS} -I ${SSL_INCLUDE_DIRS} -l;${SSL_LIBRARIES}")
+    else()
+        find_package(OpenSSL REQUIRED)
+        set (SSL_INCLUDE_DIRS ${OPENSSL_INCLUDE_DIR})
+        set (SSL_LIBRARIES ${OPENSSL_LIBRARIES})
+        message(STATUS "SSL via find_package(OpenSSL): -I ${SSL_INCLUDE_DIRS} -l;${SSL_LIBRARIES}")
+    endif()
+    add_definitions(
+            -DHAICRYPT_USE_OPENSSL_EVP=1
+            -DHAICRYPT_USE_OPENSSL_AES
+    )
 endif()
 
 message (STATUS "SSL libraries: ${SSL_LIBRARIES}")
