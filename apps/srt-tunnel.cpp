@@ -642,7 +642,7 @@ void SrtMedium::Connect()
 {
     sockaddr_in sa = CreateAddrInet(m_uri.host(), m_uri.portno());
 
-    int st = srt_connect(m_socket, (sockaddr*)&sa, sizeof sa);
+    int st = srt_connect(m_socket, (sockaddr*)&sa, sizeof sa, nullptr);
     if (st == SRT_ERROR)
         Error(UDT::getlasterror(), "srt_connect");
 

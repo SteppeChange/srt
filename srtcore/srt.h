@@ -510,10 +510,6 @@ inline bool operator&(int flags, SRT_EPOLL_OPT eflg)
 }
 #endif
 
-#if __cplusplus <= 199711L
-# error This library needs at least a C++11 compliant compiler
-#endif
-
 using from_addr_cb = std::function<void(const SRTSOCKET, struct sockaddr const *, const socklen_t)>;
 
 typedef struct CPerfMon SRT_TRACEINFO;
